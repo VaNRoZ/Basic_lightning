@@ -75,13 +75,13 @@ public:
 	//
 	void ProcessKeyboard(Camera_Movement direction, float deltaTime)
 	{
-		float velicity = MovementSpeed * deltaTime;
+		float velocity = MovementSpeed * deltaTime;
 		if (direction == FORWARD)
 			Position += Front * velocity;
 		if (direction == BACKWARD)
 			Position -= Front * velocity;
 		if (direction == LEFT)
-			Position -= Right * velosity;
+			Position -= Right * velocity;
 		if (direction == RIGHT)
 			Position += Right * velocity;
 	}
@@ -126,13 +126,13 @@ private:
 	{
 		//
 		glm::vec3 front;
-		front.x = cos(glm::redians(Yaw)) * cos(glm::radians(Pitch));
+		front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
 		front.y = sin(glm::radians(Pitch));
 		front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
 		Front = glm::normalize(front);
 
 		//
-		Right = glm::normalize(glm::cross(Front, WorldUP));
+		Right = glm::normalize(glm::cross(Front, WorldUp));
 		Up = glm::normalize(glm::cross(Right, Front));
 	}
 };

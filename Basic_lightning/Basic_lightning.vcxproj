@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source.cpp" />
     <ClCompile Include="E:\OpenGL\glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stb_image.cpp" />
@@ -144,6 +145,8 @@
   <ItemGroup>
     <None Include="..\3.1.lamp.fs" />
     <None Include="..\3.1.lamp.vs" />
+    <None Include="..\3.1.materials.fs" />
+    <None Include="..\3.1.materials.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

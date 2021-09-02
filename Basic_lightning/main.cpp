@@ -1,15 +1,17 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "std_image.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shader_s.h"
 #include "camera.h"
+
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void moudse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
@@ -25,7 +27,7 @@ bool firstMouse = true;
 
 //Timing
 float deltaTime = 0.0f;
-float lastTime = 0.0f;
+float lastFrame = 0.0f;
 
 //Lightning
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
@@ -48,7 +50,7 @@ int main()
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, mouse_callback);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
@@ -56,10 +58,10 @@ int main()
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	//glad: loading all pointers on OpenGL-function
-	if (!gladLoadGLLoader((GLADLoadproc)glfwGetProcAddress))
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
-		return - 1;
+		return -1;
 	}
 
 	//configure gloabal state OpenGL
@@ -127,7 +129,7 @@ int main()
 	//Coordinats attrinbute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	
+
 	//atteibute normales
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
@@ -159,18 +161,33 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//VERIFY 
+		//Verify in shader activation before then uniform variables set
 		lightingShader.use();
-		lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-		lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-		lightingSharer.setVec3("lightPos", lightPos);
-		ligtningShader.setVec3("viewPos", camera.Position);
+		lightingShader.setVec3("light.position", lightPos);
+		lightingShader.setVec3("viewPos", camera.Position);
 
-		//view/ Projection transforms
-		glm::mat4 ptojection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH /
-			(float)SCR_HEIGHT, 0.1f, 100.0f);
+		//Properties of the light
+		glm::vec3 lightColor;
+		lightColor.x = sin(glfwGetTime() * 2.0f);
+		lightColor.y = sin(glfwGetTime() * 0.7f);
+		lightColor.z = sin(glfwGetTime() * 1.3f);
+		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);// reduce the impact
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // smal impact
+		lightingShader.setVec3("light.ambbient", ambientColor);
+		lightingShader.setVec3("light.diffuse", diffuseColor);
+		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		//Propertis of materinl
+		lightingShader.setVec3("materinal.ambiant", 1.0f, 0.5f, 0.31f);
+		lightingShader.setVec3("mareterial.diffuse", 1.0f, 0.5f, 0.31f);
+		lightingShader.setVec3("light.specular", 0.5f, 0.5f, 0.5f);
+		lightingShader.setFloat("material.shininess", 32.0f);
+
+		//View/Projection transformation
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
+			(float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		lightingShader.setMat4("prohection", projection);
+		lightingShader.setMat4("ptojection", projection);
 		lightingShader.setMat4("view", view);
 
 		//world transform
@@ -193,25 +210,29 @@ int main()
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		//GLFW:
+		//GLFW: content sharing front- and back- buffer
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 	}
 
-	//option
+	//Optional: release all resources as soon as  they have serves their purpose
+
 	glDeleteVertexArrays(1, &cubeVAO);
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &VBO);
 
-	//glfw:
+	//glfw: completion, release all previously allocated GLFW resources
 	glfwTerminate();
 	return 0;
 }
 
-void processInput(GLFWwindow* window)
-{
+//processing all input events
+void processInput(GLFWwindow* window){
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		camera.ProcessKeyboard(BACKWARD, deltaTime);
@@ -224,7 +245,7 @@ void processInput(GLFWwindow* window)
 //glfw
 void framebuffer_size_callback(GLFWwindow* wiondow, int width, int height)
 {
-	glViewport(0, 0, widht, heigth);
+	glViewport(0, 0, width, height);
 }
 
 //glfw:
@@ -234,7 +255,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	{
 		lastX = xpos;
 		lastY = ypos;
-		firstMouse = flase;
+		firstMouse = false;
 	}
 
 	float xoffset = xpos - lastX;

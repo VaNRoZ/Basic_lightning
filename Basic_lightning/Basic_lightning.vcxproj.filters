@@ -24,6 +24,9 @@
     <ClCompile Include="E:\OpenGL\glad.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
@@ -43,5 +46,7 @@
     <None Include="..\3.1.lamp.vs">
       <Filter>Исходные файлы</Filter>
     </None>
+    <None Include="..\3.1.materials.fs" />
+    <None Include="..\3.1.materials.vs" />
   </ItemGroup>
 </Project>
